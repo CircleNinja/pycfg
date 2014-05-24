@@ -1,5 +1,6 @@
 import os.path
 import shutil
+import math
 
 class Vec:
     def __init__(self, x=0, y=None, z=None):
@@ -14,7 +15,20 @@ class Vec:
 
     def str(self):
         return "{0} {1} {2}".format(self.x, self.y, self.z)
-
+    
+    #TODO: This introduces rounding errors faster than expected. Find and fix.
+    def rotate(self, origin, axis, angle):
+        angle = math.radians(angle)
+        if (axis == 'x'):
+            self.y = ((self.y - origin.y) * math.cos(angle)) - ((origin.z - self.z) * math.sin(angle)) + origin.y
+            self.z = ((self.z - origin.z) * math.cos(angle)) + ((origin.y - self.y) * math.sin(angle)) + origin.z
+        elif (axis == 'y'):
+            self.x = ((self.x - origin.x) * math.cos(angle)) - ((origin.z - self.z) * math.sin(angle)) + origin.x
+            self.z = ((self.z - origin.z) * math.cos(angle)) + ((origin.x - self.x) * math.sin(angle)) + origin.z
+        elif (axis == 'z'):
+            self.x = ((self.x - origin.x) * math.cos(angle)) - ((origin.y - self.y) * math.sin(angle)) + origin.x
+            self.y = ((self.y - origin.y) * math.cos(angle)) + ((origin.x - self.x) * math.sin(angle)) + origin.y
+        return
 
 class CfgBuilder:
     fnum = 0
@@ -55,12 +69,15 @@ class CfgBuilder:
             # write line to file
             f.write(line)
 
-        wait = 0
+        wait = 10   # Changed from 0 as we cleanup when script is exectuted and this causes issues
         f = open("pycfg_{0}.cfg".format(self.name), "w")
+        f.write("alias {0} \"ent_fire {0} kill;setinfo {0} off\"\n".format(self.name))
+        f.write("{0}\n\n".format(self.name))
         for name in self.fnames:
             f.write("wait {0}; exec {1}\n".format(wait, name))
             wait += self.wait
-        f.write("wait {0};echo done!\n".format(wait))
+        f.write("\nwait {0};setinfo {1} on\n".format(wait,self.name))
+        f.write("wait {0};echo {1}\n".format(wait,self.name))
         f.close()
 
 
